@@ -1,15 +1,45 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { FlatList, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import EventRow from '../../src/components/EventRow';
-import { events } from '../../src/data/events';
+import { useEvents } from '../../src/hooks/useEvents';
 
 export default function EventsScreen() {
+  const { data, isPending, isError, error, refetch, isRefetching } = useEvents();
   const [savedIds, setSavedIds] = useState<number[]>([]);
   const [search, setSearch] = useState('');
 
+  if (isPending) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" />
+        <Text style={styles.message}>Loading events</Text>
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.errorTitle}>Could not load events</Text>
+        <Text style={styles.message}>{error.message}</Text>
+        <Pressable onPress={() => refetch()} style={styles.button}>
+          <Text style={styles.buttonText}>Try again</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
   // the list is computed on every render, only the text is in state
-  const shownEvents = events.filter((event) =>
+  const shownEvents = data.filter((event) =>
     event.title.toLowerCase().includes(search.toLowerCase()),
   );
 
@@ -41,6 +71,8 @@ export default function EventsScreen() {
       keyboardShouldPersistTaps="handled"
       data={shownEvents}
       keyExtractor={(e) => String(e.id)}
+      refreshing={isRefetching}
+      onRefresh={() => refetch()}
       ListHeaderComponent={header}
       renderItem={({ item }) => (
         <EventRow
@@ -57,6 +89,37 @@ export default function EventsScreen() {
 }
 
 const styles = StyleSheet.create({
+  center: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+    backgroundColor: '#f6f7fb',
+  },
+  message: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#5b6472',
+    textAlign: 'center',
+  },
+  errorTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#b91c1c',
+  },
+  button: {
+    minHeight: 44,
+    marginTop: 20,
+    paddingHorizontal: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#1d4ed8',
+    borderRadius: 8,
+  },
+  buttonText: {
+    fontSize: 18,
+    color: '#ffffff',
+  },
   list: {
     flex: 1,
     backgroundColor: '#f6f7fb',
