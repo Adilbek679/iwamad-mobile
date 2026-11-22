@@ -25,7 +25,8 @@
       "baseUrl": "/iwamad-mobile"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-status-bar"
     ]
   }
 }
